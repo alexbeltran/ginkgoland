@@ -26,7 +26,7 @@ var _ = Describe("Reporter", func() {
 				ComponentTexts: []string{"ROOT", "success layer", "should be success"},
 			})
 		})
-		FIt("should succeed", func() {
+		It("should succeed", func() {
 			Expect(buff.String()).To(ContainSubstring("=== RUN"))
 		})
 
@@ -34,8 +34,15 @@ var _ = Describe("Reporter", func() {
 			func(state types.SpecState, expectedSubstr string) {
 				spec := &types.SpecSummary{
 					ComponentTexts: []string{"ROOT", "success layer", "should be success"},
-					RunTime:        time.Millisecond * 500,
-					State:          state,
+					ComponentCodeLocations: []types.CodeLocation{
+						{
+							FileName:       "fake.go",
+							LineNumber:     30,
+							FullStackTrace: "I am a stack trace!",
+						},
+					},
+					RunTime: time.Millisecond * 500,
+					State:   state,
 				}
 				reporter.SpecDidComplete(spec)
 				Expect(buff.String()).To(ContainSubstring(expectedSubstr))
