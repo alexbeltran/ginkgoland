@@ -52,12 +52,20 @@ func (r *Reporter) SpecDidComplete(specSummary *types.SpecSummary) {
 	switch specSummary.State {
 	case types.SpecStatePassed:
 		state = "PASS"
-	case types.SpecStateFailed, types.SpecStateInvalid, types.SpecStateTimedOut, types.SpecStatePanicked:
+	case types.SpecStateFailed, types.SpecStateInvalid, types.SpecStateTimedOut:
 		state = "FAIL"
 		r.printGoResult(state, nameFromSummary(specSummary), specSummary.RunTime)
 
 		// print where and why we failed
 		_, _ = fmt.Fprintf(r.out, "  %s: %s\n", specSummary.Failure.Location.String(), specSummary.Failure.Message)
+		return
+
+	case types.SpecStatePanicked:
+		state = "FAIL"
+		r.printGoResult(state, nameFromSummary(specSummary), specSummary.RunTime)
+
+		// print where and why we failed
+		_, _ = fmt.Fprintf(r.out, "  %s: %s\n  %v\n %v\n", specSummary.Failure.Location.String(), specSummary.Failure.Message, specSummary.Failure.ComponentCodeLocation, specSummary.Failure.ForwardedPanic)
 		return
 	case types.SpecStateSkipped:
 		state = "SKIP"
@@ -81,7 +89,7 @@ func (r *Reporter) SpecSuiteDidEnd(summary *types.SuiteSummary) {
 	if summary.NumberOfFailedSpecs+summary.NumberOfSkippedSpecs > 0 {
 		state = "FAIL"
 	}
-	_, _ = fmt.Fprintf(r.out, "--- %s: %s (%0.3f)\n", state, r.suiteName, summary.RunTime.Seconds())
+	_, _ = fmt.Fprintf(r.out, "\n--- %s: %s (%0.3f)\n", state, r.suiteName, summary.RunTime.Seconds())
 }
 
 func nameFromSummary(summary *types.SpecSummary) string {
